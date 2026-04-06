@@ -24,23 +24,31 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const { data } = await authAPI.login({ email, password });
-    if (data.success) {
-      localStorage.setItem('msrcasc_token', data.data.token);
-      localStorage.setItem('msrcasc_user', JSON.stringify(data.data.user));
-      setUser(data.data.user);
+    try {
+      const { data } = await authAPI.login({ email, password });
+      if (data.success) {
+        localStorage.setItem('msrcasc_token', data.data.token);
+        localStorage.setItem('msrcasc_user', JSON.stringify(data.data.user));
+        setUser(data.data.user);
+      }
+      return data;
+    } catch (error) {
+      throw error.response?.data?.message || 'Failed to login';
     }
-    return data;
   };
 
   const register = async (name, email, password, role) => {
-    const { data } = await authAPI.register({ name, email, password, role });
-    if (data.success) {
-      localStorage.setItem('msrcasc_token', data.data.token);
-      localStorage.setItem('msrcasc_user', JSON.stringify(data.data.user));
-      setUser(data.data.user);
+    try {
+      const { data } = await authAPI.register({ name, email, password, role });
+      if (data.success) {
+        localStorage.setItem('msrcasc_token', data.data.token);
+        localStorage.setItem('msrcasc_user', JSON.stringify(data.data.user));
+        setUser(data.data.user);
+      }
+      return data;
+    } catch (error) {
+      throw error.response?.data?.message || 'Failed to register';
     }
-    return data;
   };
 
   const logout = () => {
