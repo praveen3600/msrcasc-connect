@@ -21,7 +21,6 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('msrcasc_token');
       localStorage.removeItem('msrcasc_user');
       // Only redirect if not already on login page
       if (window.location.pathname !== '/login') {

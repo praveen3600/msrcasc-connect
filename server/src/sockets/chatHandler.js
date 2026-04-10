@@ -10,7 +10,11 @@ const onlineUsers = new Map(); // userId -> socketId
 const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL || 'http://localhost:5173',
+      origin: [
+        process.env.CLIENT_URL,
+        'http://localhost:5173',
+        'https://msrcasc-connect.vercel.app',
+      ].filter(Boolean),
       methods: ['GET', 'POST'],
       credentials: true,
     },

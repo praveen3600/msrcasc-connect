@@ -3,14 +3,17 @@ import { io } from 'socket.io-client';
 let socket = null;
 
 export const connectSocket = () => {
-  const token = localStorage.getItem('msrcasc_token');
-  if (!token) return null;
-
   if (socket?.connected) return socket;
 
-  socket = io('/', {
-    auth: { token },
+  // In production, connect to the backend URL (without /api suffix).
+  // In dev, the Vite proxy handles it so '/' works.
+  const backendUrl = import.meta.env.VITE_API_URL
+    ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
+    : '/';
+
+  socket = io(backendUrl, {
     transports: ['websocket', 'polling'],
+    withCredentials: true, // Send cookies for auth (HTTP-only JWT)
   });
 
   socket.on('connect', () => {
