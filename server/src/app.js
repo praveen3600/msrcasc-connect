@@ -8,8 +8,13 @@ const logger = require('./utils/logger');
 
 const app = express();
 
+// --- 0. TRUST PROXY FOR RENDER ---
+// Render acts as a reverse proxy. This is required for express-rate-limit
+// and standard req.ip tracking to work correctly.
+app.set('trust proxy', 1);
+
 // --- 1. SET SECURITY HTTP HEADERS ---
-app.use(helmet()); 
+app.use(helmet());
 
 // --- 2. LOGGING ---
 const stream = {
