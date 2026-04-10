@@ -46,7 +46,7 @@ const register = async (req, res) => {
       });
     }
 
-    const user = await User.create({ 
+    const user = new User({ 
       name, 
       email, 
       password, 
@@ -58,7 +58,9 @@ const register = async (req, res) => {
 
     // Stub: Email verification
     const verifyToken = user.getVerificationToken();
-    await user.save({ validateBeforeSave: false });
+    
+    // Check validation and save only ONCE!
+    await user.save();
     
     const verifyUrl = `${req.protocol}://${req.get('host')}/api/auth/verifyemail/${verifyToken}`;
     logger.info(`[STUB EMAIL] Verification link for ${user.email}: ${verifyUrl}`);
