@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const logger = require('./utils/logger');
@@ -34,11 +33,27 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // --- 5. DATA SANITIZATION ---
+
+// Express 5 Compatibility Shim:
+// In Express 5, req.query is a getter-only property. Libraries like
+// express-mongo-sanitize try to reassign it, causing a TypeError.
+// This middleware redefines req.query as writable before sanitization runs.
+app.use((req, res, next) => {
+  Object.defineProperty(req, 'query', {
+    value: { ...req.query },
+    writable: true,
+    configurable: true,
+    enumerable: true,
+  });
+  next();
+});
+
 // Data sanitization against NoSQL query injection
 app.use(mongoSanitize());
 
-// Data sanitization against XSS
-app.use(xss());
+// NOTE: xss-clean has been removed — it is deprecated and incompatible with Express 5.
+// XSS protection is already provided by: Helmet (CSP headers), React (auto-escaping),
+// and express-validator (field-level .escape() sanitization).
 
 // --- 6. RATE LIMITING (Global via apiLimiter on routes) ---
 const { apiLimiter } = require('./middleware/rateLimiter');
