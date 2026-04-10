@@ -14,20 +14,27 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('msrcasc_user');
-    const token = localStorage.getItem('msrcasc_token');
-
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    // We now just check user session directly, no token in layout
+    const checkSession = async () => {
+      try {
+        const { data } = await authAPI.getMe();
+        if (data.success) {
+          setUser(data.data.user);
+          localStorage.setItem('msrcasc_user', JSON.stringify(data.data.user)); // Just UI cache
+        }
+      } catch (error) {
+        localStorage.removeItem('msrcasc_user');
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkSession();
   }, []);
 
   const login = async (email, password) => {
     try {
       const { data } = await authAPI.login({ email, password });
       if (data.success) {
-        localStorage.setItem('msrcasc_token', data.data.token);
         localStorage.setItem('msrcasc_user', JSON.stringify(data.data.user));
         setUser(data.data.user);
       }
@@ -41,7 +48,6 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await authAPI.register({ name, email, password, role });
       if (data.success) {
-        localStorage.setItem('msrcasc_token', data.data.token);
         localStorage.setItem('msrcasc_user', JSON.stringify(data.data.user));
         setUser(data.data.user);
       }
@@ -51,8 +57,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('msrcasc_token');
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (e) {
+      console.error(e);
+    }
     localStorage.removeItem('msrcasc_user');
     setUser(null);
   };

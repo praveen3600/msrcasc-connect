@@ -5,15 +5,12 @@ const API = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Send cookies with requests
 });
 
-// Request interceptor — attach JWT token
+// Request interceptor — attach simple things if needed (Not tokens anymore)
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('msrcasc_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -39,6 +36,7 @@ API.interceptors.response.use(
 export const authAPI = {
   register: (data) => API.post('/auth/register', data),
   login: (data) => API.post('/auth/login', data),
+  logout: () => API.post('/auth/logout'),
   getMe: () => API.get('/auth/me'),
 };
 

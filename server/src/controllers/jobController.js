@@ -1,4 +1,5 @@
 const Job = require('../models/Job');
+const logger = require('../utils/logger');
 
 // @desc    Create a new job
 // @route   POST /api/jobs
@@ -7,7 +8,7 @@ const createJob = async (req, res) => {
   try {
     const { title, company, description, skillsRequired, location, type, salary, deadline } = req.body;
 
-    const job = await Job.create({
+    const jobData = {
       title,
       company,
       description,
@@ -17,7 +18,11 @@ const createJob = async (req, res) => {
       salary,
       deadline,
       postedBy: req.user._id,
-    });
+    };
+
+    const job = await Job.create(jobData);
+
+    logger.info(`[AUDIT] Job posted by ${req.user._id} (${req.user.role}): ${job._id} - ${title}`);
 
     res.status(201).json({
       success: true,
@@ -107,6 +112,15 @@ const applyToJob = async (req, res) => {
       });
     }
 
+    // --- IDOR & VISIBILITY PROTECTION ---
+    if (!job.isActive) {
+      logger.warn(`[SECURITY] Unauthorized application attempt on inactive job ${req.params.id} by user ${req.user._id}`);
+      return res.status(403).json({
+        success: false,
+        message: 'This job is no longer accepting applications',
+      });
+    }
+
     // Check if already applied
     const alreadyApplied = job.applicants.some(
       (app) => app.user.toString() === req.user._id.toString()
@@ -121,6 +135,8 @@ const applyToJob = async (req, res) => {
 
     job.applicants.push({ user: req.user._id });
     await job.save();
+
+    logger.info(`[AUDIT] User ${req.user._id} applied to job ${job._id}`);
 
     res.json({
       success: true,

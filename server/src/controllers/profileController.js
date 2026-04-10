@@ -1,5 +1,26 @@
 const Profile = require('../models/Profile');
 const User = require('../models/User');
+const logger = require('../utils/logger');
+
+// Helper to mask sensitive data
+const maskPII = (profile, requesterRole, isOwner) => {
+  if (requesterRole === 'admin' || requesterRole === 'recruiter' || isOwner) {
+    return profile;
+  }
+
+  const masked = profile.toObject ? profile.toObject() : { ...profile };
+  
+  if (masked.phone) {
+    masked.phone = masked.phone.replace(/.(?=.{4})/g, 'X');
+  }
+  
+  if (masked.email) {
+    const [name, domain] = masked.email.split('@');
+    masked.email = `${name[0]}${new Array(name.length).join('*')}@${domain}`;
+  }
+  
+  return masked;
+};
 
 // @desc    Create or update profile
 // @route   POST /api/profiles
@@ -98,9 +119,17 @@ const getProfileByUserId = async (req, res) => {
       });
     }
 
+    const isOwner = req.user._id.toString() === profile.user.toString();
+    const maskedProfile = maskPII(profile, req.user.role, isOwner);
+
+    // Audit Logging for privileged views
+    if ((req.user.role === 'admin' || req.user.role === 'recruiter') && !isOwner) {
+      logger.info(`[AUDIT] Sensitive profile viewed: User ${req.user._id} (${req.user.role}) viewed profile of User ${profile.user}`);
+    }
+
     res.json({
       success: true,
-      data: { profile },
+      data: { profile: maskedProfile },
     });
   } catch (error) {
     res.status(500).json({
@@ -121,10 +150,15 @@ const getAllProfiles = async (req, res) => {
 
     const profiles = await Profile.find(filter).sort({ createdAt: -1 });
 
+    const maskedProfiles = profiles.map(p => {
+      const isOwner = req.user._id.toString() === p.user.toString();
+      return maskPII(p, req.user.role, isOwner);
+    });
+
     res.json({
       success: true,
-      count: profiles.length,
-      data: { profiles },
+      count: maskedProfiles.length,
+      data: { profiles: maskedProfiles },
     });
   } catch (error) {
     res.status(500).json({

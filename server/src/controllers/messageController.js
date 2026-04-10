@@ -48,7 +48,7 @@ const getConversations = async (req, res) => {
     const conversations = await Conversation.find({
       participants: req.user._id,
     })
-      .populate('participants', 'name email avatar')
+      .populate('participants', 'name avatar role')
       .populate('lastMessage')
       .sort({ updatedAt: -1 });
 
@@ -72,7 +72,7 @@ const getChatUsers = async (req, res) => {
   try {
     const users = await User.find({
       _id: { $ne: req.user._id },
-    }).select('name email role avatar');
+    }).select('name role avatar');
 
     res.json({
       success: true,

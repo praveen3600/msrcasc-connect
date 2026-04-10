@@ -1,5 +1,6 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
+const cookie = require('cookie');
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
 
@@ -15,9 +16,16 @@ const initializeSocket = (server) => {
     },
   });
 
-  // JWT authentication middleware for Socket.io
+  // JWT authentication middleware for Socket.io — Reads from HTTP-only Cookie
   io.use((socket, next) => {
-    const token = socket.handshake.auth?.token;
+    const cookies = socket.handshake.headers.cookie;
+    
+    if (!cookies) {
+      return next(new Error('Authentication error: Cookies missing'));
+    }
+
+    const parsedCookies = cookie.parse(cookies);
+    const token = parsedCookies.jwt;
 
     if (!token) {
       return next(new Error('Authentication error: Token required'));
@@ -29,7 +37,7 @@ const initializeSocket = (server) => {
       socket.userRole = decoded.role;
       next();
     } catch (err) {
-      next(new Error('Authentication error: Invalid token'));
+      next(new Error('Authentication error: Invalid or expired token'));
     }
   });
 

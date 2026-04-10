@@ -1,14 +1,16 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// Protect routes — verify JWT token
+// Protect routes — verify JWT token from HTTP Only cookie
 const protect = async (req, res, next) => {
   let token;
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
+  if (req.cookies && req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
+
+  // Fallback for header during transition/tests if needed
+  if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
   }
 
@@ -34,7 +36,7 @@ const protect = async (req, res, next) => {
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: 'Not authorized — invalid token',
+      message: 'Not authorized — invalid or expired session',
     });
   }
 };

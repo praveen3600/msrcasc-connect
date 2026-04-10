@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Disallow API endpoints for bots to prevent unauthenticated crawling spam
+Disallow: /api/
+
+Sitemap: https://msrcasc-connect.com/sitemap.xml

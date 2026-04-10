@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
+const { aiLimiter } = require('../middleware/rateLimiter');
+
+router.use(aiLimiter); // Apply AI specific limits to all routes in this router
 const {
   analyzeResumeHandler,
   recommendJobsHandler,

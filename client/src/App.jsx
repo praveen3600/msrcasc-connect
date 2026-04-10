@@ -10,6 +10,9 @@ import JobsPage from './pages/JobsPage';
 import JobDetailsPage from './pages/JobDetailsPage';
 import ChatPage from './pages/ChatPage';
 import AIToolsPage from './pages/AIToolsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
+import CookieNotice from './components/CookieNotice';
 
 // Redirect logged-in users away from auth pages
 const PublicRoute = ({ children }) => {
@@ -30,6 +33,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <CookieNotice />
         <Routes>
           {/* Public auth routes */}
           <Route
@@ -48,6 +52,10 @@ function App() {
               </PublicRoute>
             }
           />
+
+          {/* Legal Public Routes */}
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
 
           {/* Protected app routes */}
           <Route
